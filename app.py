@@ -6,6 +6,7 @@ VETREX STUDIO — Sora-2
 import os
 import uuid
 import requests
+import logging
 from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 
@@ -14,6 +15,10 @@ VETREX_API = "https://vetrex.site/v1"
 MODEL = "sora-2"
 UPLOAD_DIR = "uploads"
 REQUEST_TIMEOUT = 60  # زيادة المهلة إلى 60 ثانية
+
+# تفعيل logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
@@ -445,10 +450,28 @@ def generate():
         "aspect_ratio": data.get("aspect_ratio", "16:9"),
     }
     try:
+        logger.info(f"🎬 Sending to {VETREX_API}/videos/generations: {payload}")
         res = requests.post(f"{VETREX_API}/videos/generations",
-                            json=payload, timeout=REQUEST_TIMEOUT).json()
-        return jsonify(res)
+                            json=payload, timeout=REQUEST_TIMEOUT)
+        logger.info(f"📥 Response Status: {res.status_code}")
+        logger.info(f"📥 Response Text: {res.text[:500]}")
+        
+        if res.status_code != 200:
+            return jsonify({"status": "error", "python_error": f"API returned {res.status_code}: {res.text}"}), 502
+        
+        try:
+            json_response = res.json()
+            logger.info(f"✅ JSON Response: {json_response}")
+            return jsonify(json_response)
+        except Exception as json_error:
+            logger.error(f"❌ JSON Parse Error: {json_error}")
+            return jsonify({"status": "error", "python_error": f"Invalid JSON response: {res.text}"}), 502
+            
+    except requests.exceptions.Timeout:
+        logger.error("⏱️ Request Timeout")
+        return jsonify({"status": "error", "python_error": "Request timeout - API is slow"}), 502
     except Exception as e:
+        logger.error(f"❌ Exception: {str(e)}")
         return jsonify({"status": "error", "python_error": str(e)}), 502
 
 
@@ -462,20 +485,56 @@ def edit_video():
         "images": data.get("images", []),
     }
     try:
+        logger.info(f"🎨 Sending to {VETREX_API}/videos/edits: {payload}")
         res = requests.post(f"{VETREX_API}/videos/edits",
-                            json=payload, timeout=REQUEST_TIMEOUT).json()
-        return jsonify(res)
+                            json=payload, timeout=REQUEST_TIMEOUT)
+        logger.info(f"📥 Response Status: {res.status_code}")
+        logger.info(f"📥 Response Text: {res.text[:500]}")
+        
+        if res.status_code != 200:
+            return jsonify({"status": "error", "python_error": f"API returned {res.status_code}: {res.text}"}), 502
+        
+        try:
+            json_response = res.json()
+            logger.info(f"✅ JSON Response: {json_response}")
+            return jsonify(json_response)
+        except Exception as json_error:
+            logger.error(f"❌ JSON Parse Error: {json_error}")
+            return jsonify({"status": "error", "python_error": f"Invalid JSON response: {res.text}"}), 502
+            
+    except requests.exceptions.Timeout:
+        logger.error("⏱️ Request Timeout")
+        return jsonify({"status": "error", "python_error": "Request timeout - API is slow"}), 502
     except Exception as e:
+        logger.error(f"❌ Exception: {str(e)}")
         return jsonify({"status": "error", "python_error": str(e)}), 502
 
 
 @app.get("/api/results/<task_id>")
 def task_result(task_id):
     try:
+        logger.info(f"🔍 Fetching results for {task_id}")
         res = requests.get(f"{VETREX_API}/videos/results/{task_id}",
-                           timeout=REQUEST_TIMEOUT).json()
-        return jsonify(res)
+                           timeout=REQUEST_TIMEOUT)
+        logger.info(f"📥 Response Status: {res.status_code}")
+        logger.info(f"📥 Response Text: {res.text[:500]}")
+        
+        if res.status_code != 200:
+            return jsonify({"status": "error", "python_error": f"API returned {res.status_code}: {res.text}"}), 502
+        
+        try:
+            json_response = res.json()
+            logger.info(f"✅ JSON Response: {json_response}")
+            return jsonify(json_response)
+        except Exception as json_error:
+            logger.error(f"❌ JSON Parse Error: {json_error}")
+            return jsonify({"status": "error", "python_error": f"Invalid JSON response: {res.text}"}), 502
+            
+    except requests.exceptions.Timeout:
+        logger.error("⏱️ Request Timeout")
+        return jsonify({"status": "error", "python_error": "Request timeout - API is slow"}), 502
     except Exception as e:
+        logger.error(f"❌ Exception: {str(e)}")
         return jsonify({"status": "error", "python_error": str(e)}), 502
 
 
