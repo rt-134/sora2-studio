@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 VETREX_API = "https://vetrex.site/v1"
 MODEL = "sora-2"
 UPLOAD_DIR = "uploads"
+REQUEST_TIMEOUT = 60  # زيادة المهلة إلى 60 ثانية
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
@@ -445,7 +446,7 @@ def generate():
     }
     try:
         res = requests.post(f"{VETREX_API}/videos/generations",
-                            json=payload, timeout=15).json()
+                            json=payload, timeout=REQUEST_TIMEOUT).json()
         return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "python_error": str(e)}), 502
@@ -462,7 +463,7 @@ def edit_video():
     }
     try:
         res = requests.post(f"{VETREX_API}/videos/edits",
-                            json=payload, timeout=15).json()
+                            json=payload, timeout=REQUEST_TIMEOUT).json()
         return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "python_error": str(e)}), 502
@@ -472,7 +473,7 @@ def edit_video():
 def task_result(task_id):
     try:
         res = requests.get(f"{VETREX_API}/videos/results/{task_id}",
-                           timeout=15).json()
+                           timeout=REQUEST_TIMEOUT).json()
         return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "python_error": str(e)}), 502
